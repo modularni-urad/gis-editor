@@ -1,0 +1,13 @@
+*.min.js
+.*
+./index.html
+.git
+.gitignore
+build/
+js/main.js
+node_modules/
+test/for_components_debug/node_modules
+npm-debug.log
+server.js
+vars.env
+package-lock.json
