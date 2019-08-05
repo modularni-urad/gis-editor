@@ -1,6 +1,7 @@
 /* global L */
 // import { KROVAK } from './consts'
 import EditablesStore from './stores/editables'
+import EditControls from './editcontrols'
 
 var map = L.map('map', {
   center: [49.414016, 14.658385],
@@ -24,14 +25,43 @@ L.tileLayer('http://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
 //   crs: KROVAK
 // }).addTo(map)
 
+const editControls = new EditControls({
+  onSave: evt => {
+    alert('save Clicked')
+  },
+  onDelete: evt => {
+    alert('del Clicked')
+  },
+  onCancel: evt => {
+    editablesStore.cancelEdit()
+  }
+})
+editControls.addTo(map)
+
 const drawnItems = L.featureGroup().addTo(map)
 
-const editablesStore = new EditablesStore(drawnItems)
+const tmp = L.featureGroup()
 
+map.addControl(new L.Control.Draw({
+  // edit: {
+  //   featureGroup: tmp,
+  //   poly: {
+  //     allowIntersection: false
+  //   }
+  // },
+  draw: {
+    polygon: {
+      allowIntersection: false,
+      showArea: true
+    },
+    rectangle: false,
+    circle: false,
+    circlemarker: false
+  }
+}))
+
+const editablesStore = new EditablesStore(drawnItems, tmp)
 editablesStore.load(0)
 
-map.on(L.Draw.Event.CREATED, function (event) {
-  var layer = event.layer
-
-  drawnItems.addLayer(layer)
-})
+map.on(L.Draw.Event.CREATED, editablesStore.onCreated.bind(editablesStore))
+map.on('draw:edited', editablesStore.onEdited.bind(editablesStore))

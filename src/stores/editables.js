@@ -5,9 +5,10 @@ import APIService from './apiService'
 
 export default class StateStore {
   //
-  constructor (layer) {
+  constructor (layer, tmp) {
     this.layer = layer
     this.api = new APIService(this.on401.bind(this))
+    this.tmp = tmp
     this.edited = null
   }
 
@@ -34,21 +35,50 @@ export default class StateStore {
     setTimeout(this.onLoaded.bind(this), 1000)
   }
 
+  onSelect (e) {
+    e.target.off('click')
+    e.target.setStyle({ fillColor: 'red', color: 'red' })
+    e.target.editing.enable()
+    if (this.edited) {
+      this.edited.editing.disable()
+      this.edited.setStyle({ fillColor: 'blue', color: 'blue' })
+    }
+    this.edited = e.target
+  }
+
+  cancelEdit () {
+    if (this.edited) {
+      this.edited.editing.disable()
+      this.edited.setStyle({ fillColor: 'blue', color: 'blue' })
+      this.edited.on('click', this.onSelect.bind(this))
+      this.edited = null
+    }
+  }
+
   onLoaded (data) {
     const polygon = new L.Polygon([
       [49.414016, 14.658385],
       [49.41, 14.658385],
       [49.414016, 14.65]
     ])
-    polygon.on('click', e => {
-      e.target.setStyle({ fillColor: 'red', color: 'red' })
-      e.target.editing.enable()
-      this.edited = e.target
-    })
+    polygon.on('click', this.onSelect.bind(this))
     this.layer.addLayer(polygon)
     polygon
       .bindTooltip('My polygon', { permanent: true, direction: 'center' })
       .openTooltip()
+  }
+
+  onCreated (event) {
+    var layer = event.layer
+    layer.on('click', this.onSelect.bind(this))
+    this.layer.addLayer(layer)
+  }
+
+  onEdited (e) {
+    var layers = e.layers
+    layers.eachLayer(layer => {
+      layer.setStyle({ fillColor: 'blue', color: 'blue' })
+    })
   }
 
   __ (str) {
