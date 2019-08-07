@@ -12,8 +12,11 @@ export default L.Control.extend({
     var inner = L.DomUtil.create('div', 'leaflet-bar', container)
 
     var save = L.DomUtil.create('a', '', inner)
+    save.innerHTML = '<i class="fas fa-save"></i>'
     var cancel = L.DomUtil.create('a', '', inner)
+    cancel.innerHTML = '<i class="fas fa-undo"></i>'
     var del = L.DomUtil.create('a', '', inner)
+    del.innerHTML = '<i class="fas fa-trash-alt"></i>'
 
     L.DomEvent.addListener(save, 'click', this.options.onSave)
     L.DomEvent.addListener(del, 'click', this.options.onDelete)

@@ -25,43 +25,33 @@ L.tileLayer('http://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
 //   crs: KROVAK
 // }).addTo(map)
 
-const editControls = new EditControls({
-  onSave: evt => {
-    alert('save Clicked')
-  },
-  onDelete: evt => {
-    alert('del Clicked')
-  },
-  onCancel: evt => {
-    editablesStore.cancelEdit()
-  }
-})
-editControls.addTo(map)
-
-const drawnItems = L.featureGroup().addTo(map)
-
-const tmp = L.featureGroup()
-
-map.addControl(new L.Control.Draw({
-  // edit: {
-  //   featureGroup: tmp,
-  //   poly: {
-  //     allowIntersection: false
-  //   }
-  // },
+// TODO: disable when editing
+// https://github.com/Leaflet/Leaflet.draw/issues/401
+// https://github.com/Leaflet/Leaflet.draw/issues/315#issuecomment-104233372
+const drawControl = new L.Control.Draw({
   draw: {
     polygon: {
       allowIntersection: false,
       showArea: true
     },
     rectangle: false,
-    circle: false,
-    circlemarker: false
+    circle: false
+    // circlemarker: false
   }
-}))
+})
+map.addControl(drawControl)
 
-const editablesStore = new EditablesStore(drawnItems, tmp)
+const drawnItems = L.featureGroup().addTo(map)
+
+const editablesStore = new EditablesStore(drawnItems, drawControl)
 editablesStore.load(0)
+
+const editControls = new EditControls({
+  onSave: editablesStore.save.bind(editablesStore),
+  onDelete: editablesStore.delete.bind(editablesStore),
+  onCancel: editablesStore.cancelEdit.bind(editablesStore)
+})
+editControls.addTo(map)
 
 map.on(L.Draw.Event.CREATED, editablesStore.onCreated.bind(editablesStore))
 map.on('draw:edited', editablesStore.onEdited.bind(editablesStore))

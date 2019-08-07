@@ -1,23 +1,16 @@
 /* global L */
 import APIService from './apiService'
-// import LoginStore from './view/login'
-// import PermsEditStore from './permsEdit'
 
 export default class StateStore {
   //
-  constructor (layer, tmp) {
+  constructor (layer, drawControl) {
     this.layer = layer
     this.api = new APIService(this.on401.bind(this))
-    this.tmp = tmp
     this.edited = null
+    this.drawControl = drawControl
   }
 
-  // formatDate (d) {
-  //   return moment(d).format('DD.MM.YYYY')
-  // }
-
   on401 (e) {
-    // this.activeModal !== MODAL_NAMES.LOGIN && this.showModal(MODAL_NAMES.LOGIN)
     alert('error 401: you need to login!')
     return new Promise((resolve, reject) => {
       this.loginPromises.push(resolve)
@@ -36,12 +29,12 @@ export default class StateStore {
   }
 
   onSelect (e) {
+    // this.drawControl.disable()
     e.target.off('click')
     e.target.setStyle({ fillColor: 'red', color: 'red' })
     e.target.editing.enable()
     if (this.edited) {
-      this.edited.editing.disable()
-      this.edited.setStyle({ fillColor: 'blue', color: 'blue' })
+      this.cancelEdit()
     }
     this.edited = e.target
   }
@@ -53,6 +46,14 @@ export default class StateStore {
       this.edited.on('click', this.onSelect.bind(this))
       this.edited = null
     }
+  }
+
+  delete () {
+
+  }
+
+  save () {
+
   }
 
   onLoaded (data) {
