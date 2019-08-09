@@ -2,6 +2,7 @@
 // import { KROVAK } from './consts'
 import EditablesStore from './stores/editables'
 import EditControls from './editcontrols'
+import EditForm from './editform'
 
 var map = L.map('map', {
   center: [49.414016, 14.658385],
@@ -41,15 +42,17 @@ const drawControl = new L.Control.Draw({
 })
 map.addControl(drawControl)
 
+const editForm = new EditForm(map)
+
 const drawnItems = L.featureGroup().addTo(map)
 
-const editablesStore = new EditablesStore(drawnItems, drawControl)
+const editablesStore = new EditablesStore(drawnItems, drawControl, editForm)
 editablesStore.load(0)
 
 const editControls = new EditControls({
   onSave: editablesStore.save.bind(editablesStore),
   onDelete: editablesStore.delete.bind(editablesStore),
-  onCancel: editablesStore.cancelEdit.bind(editablesStore)
+  onCancel: editablesStore.cancel.bind(editablesStore)
 })
 editControls.addTo(map)
 

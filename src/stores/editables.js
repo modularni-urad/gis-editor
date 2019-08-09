@@ -3,11 +3,12 @@ import APIService from './apiService'
 
 export default class StateStore {
   //
-  constructor (layer, drawControl) {
+  constructor (layer, drawControl, editForm) {
     this.layer = layer
     this.api = new APIService(this.on401.bind(this))
     this.edited = null
     this.drawControl = drawControl
+    this.editForm = editForm
   }
 
   on401 (e) {
@@ -24,8 +25,7 @@ export default class StateStore {
   }
 
   load (id) {
-    // this.loadFolderContent(null)
-    setTimeout(this.onLoaded.bind(this), 1000)
+    this.api.get().then(this.onLoaded.bind(this))
   }
 
   onSelect (e) {
@@ -37,6 +37,7 @@ export default class StateStore {
       this.cancelEdit()
     }
     this.edited = e.target
+    this.editForm.show(this.edited.data)
   }
 
   cancelEdit () {
@@ -45,27 +46,35 @@ export default class StateStore {
       this.edited.setStyle({ fillColor: 'blue', color: 'blue' })
       this.edited.on('click', this.onSelect.bind(this))
       this.edited = null
+      this.editForm.hide()
     }
   }
 
-  delete () {
+  cancel () {
+    this.edited.setLatLngs(this.edited.data.geom)
+    this.cancelEdit()
+  }
 
+  delete () {
+    this.api.delete(`/${this.edited.data.id}`)
+      .then(res => {
+        this.layer.remove(this.edited)
+        this.cancelEdit()
+      })
   }
 
   save () {
-
+    const data = this.editForm.form.getData()
+    Object.assign(this.edited.data, data)
   }
 
   onLoaded (data) {
-    const polygon = new L.Polygon([
-      [49.414016, 14.658385],
-      [49.41, 14.658385],
-      [49.414016, 14.65]
-    ])
+    const polygon = new L.Polygon(data.geom)
+    polygon.data = data
     polygon.on('click', this.onSelect.bind(this))
     this.layer.addLayer(polygon)
     polygon
-      .bindTooltip('My polygon', { permanent: true, direction: 'center' })
+      .bindTooltip(data.title, { permanent: true, direction: 'center' })
       .openTooltip()
   }
 
