@@ -55,6 +55,9 @@ export default class StateStore {
   cancel () {
     this.edited.setLatLngs(JSON.parse(this.origGeom))
     delete this.origGeom
+    if (!this.edited.data.id) {
+      this.layer.removeLayer(this.edited)
+    }
     this.cancelEdit()
   }
 
@@ -69,7 +72,18 @@ export default class StateStore {
   save () {
     const data = this.editForm.form.getData()
     data.geom = this.edited.toGeoJSON().geometry
-    this.api.post(`/polygons/${this.layerid}`, data)
+    const id = this.edited.data.id
+    let savePromise = null
+    if (id) {
+      savePromise = this.api.put(`/polygons/${this.layerid}/${id}`, data)
+    } else {
+      savePromise = this.api.post(`/polygons/${this.layerid}`, data)
+    }
+    savePromise.then(this.onSaved.bind(this))
+  }
+
+  onSaved (data) {
+    this.cancelEdit()
   }
 
   onLoaded (data) {
@@ -87,8 +101,9 @@ export default class StateStore {
 
   onCreated (event) {
     var layer = event.layer
-    layer.on('click', this.onSelect.bind(this))
+    layer.data = {}
     this.layer.addLayer(layer)
+    this.onSelect({ target: layer })
   }
 
   onEdited (e) {
