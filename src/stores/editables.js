@@ -1,18 +1,18 @@
 /* global L */
-import APIService from './apiService'
+import WKT2leaflet from './wkt2leaflet'
 
 export default class StateStore {
   //
-  constructor (layer, drawControl, editForm) {
+  constructor (api, layer, layerid, drawControl, editForm) {
     this.layer = layer
-    this.api = new APIService(this.on401.bind(this))
+    this.layerid = layerid
+    this.api = api
     this.edited = null
     this.drawControl = drawControl
     this.editForm = editForm
   }
 
   on401 (e) {
-    alert('error 401: you need to login!')
     return new Promise((resolve, reject) => {
       this.loginPromises.push(resolve)
     })
@@ -25,7 +25,7 @@ export default class StateStore {
   }
 
   load (id) {
-    this.api.get().then(this.onLoaded.bind(this))
+    this.api.get(`/polygons?layerid=${id}`).then(this.onLoaded.bind(this))
   }
 
   onSelect (e) {
@@ -37,12 +37,14 @@ export default class StateStore {
       this.cancelEdit()
     }
     this.edited = e.target
+    this.origGeom = JSON.stringify(this.edited.getLatLngs())
     this.editForm.show(this.edited.data)
   }
 
   cancelEdit () {
     if (this.edited) {
       this.edited.editing.disable()
+      this.edited.editing.initialize(this.edited)
       this.edited.setStyle({ fillColor: 'blue', color: 'blue' })
       this.edited.on('click', this.onSelect.bind(this))
       this.edited = null
@@ -51,7 +53,8 @@ export default class StateStore {
   }
 
   cancel () {
-    this.edited.setLatLngs(this.edited.data.geom)
+    this.edited.setLatLngs(JSON.parse(this.origGeom))
+    delete this.origGeom
     this.cancelEdit()
   }
 
@@ -65,17 +68,21 @@ export default class StateStore {
 
   save () {
     const data = this.editForm.form.getData()
-    Object.assign(this.edited.data, data)
+    data.geom = this.edited.toGeoJSON().geometry
+    this.api.post(`/polygons/${this.layerid}`, data)
   }
 
   onLoaded (data) {
-    const polygon = new L.Polygon(data.geom)
-    polygon.data = data
-    polygon.on('click', this.onSelect.bind(this))
-    this.layer.addLayer(polygon)
-    polygon
-      .bindTooltip(data.title, { permanent: true, direction: 'center' })
-      .openTooltip()
+    data.map(i => {
+      const poly = new L.Polygon(WKT2leaflet(i.geom))
+      poly.data = i
+      poly.setStyle({ fillColor: 'blue', color: 'blue' })
+      poly.on('click', this.onSelect.bind(this))
+      this.layer.addLayer(poly)
+      poly
+        .bindTooltip(poly.data.title, { permanent: true, direction: 'center' })
+        .openTooltip()
+    })
   }
 
   onCreated (event) {

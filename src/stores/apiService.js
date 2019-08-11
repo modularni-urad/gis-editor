@@ -46,22 +46,22 @@ export default class APIService {
   }
 
   get (url) {
-    // return this.makeRequest({
-    //   method: 'get',
-    //   url: `${Conf.url}${url}`,
-    //   headers: this.authHeader
-    // })
-    return new Promise(resolve => {
-      const polygon = {
-        geom: [
-          [49.414016, 14.658385],
-          [49.41, 14.658385],
-          [49.414016, 14.65]
-        ],
-        title: 'My polygon 1'
-      }
-      setTimeout(() => resolve(polygon), 1000)
+    return this.makeRequest({
+      method: 'get',
+      url: `${Conf.url}${url}`,
+      headers: this.authHeader
     })
+    // return new Promise(resolve => {
+    //   const polygon = {
+    //     geom: [
+    //       [49.414016, 14.658385],
+    //       [49.41, 14.658385],
+    //       [49.414016, 14.65]
+    //     ],
+    //     title: 'My polygon 1'
+    //   }
+    //   setTimeout(() => resolve(polygon), 1000)
+    // })
   }
 
   post (url, data) {
