@@ -10,6 +10,7 @@ export default class StateStore {
     this.edited = null
     this.drawControl = drawControl
     this.editForm = editForm
+    this.onSelectBound = this.onSelect.bind(this)
   }
 
   on401 (e) {
@@ -30,26 +31,28 @@ export default class StateStore {
 
   onSelect (e) {
     // this.drawControl.disable()
+    this.layer.eachLayer(layer => {
+      layer.off('click', this.onSelectBound)
+    })
     e.target.off('click')
     e.target.setStyle({ fillColor: 'red', color: 'red' })
     e.target.editing.enable()
-    if (this.edited) {
-      this.cancelEdit()
-    }
     this.edited = e.target
     this.origGeom = JSON.stringify(this.edited.getLatLngs())
     this.editForm.show(this.edited.data)
+    this.enableEditButt()
   }
 
   cancelEdit () {
-    if (this.edited) {
-      this.edited.editing.disable()
-      this.edited.editing.initialize(this.edited)
-      this.edited.setStyle({ fillColor: 'blue', color: 'blue' })
-      this.edited.on('click', this.onSelect.bind(this))
-      this.edited = null
-      this.editForm.hide()
-    }
+    this.edited.editing.disable()
+    this.edited.editing.initialize(this.edited)
+    this.edited.setStyle({ fillColor: 'blue', color: 'blue' })
+    this.edited = null
+    this.editForm.hide()
+    this.layer.eachLayer(layer => {
+      layer.on('click', this.onSelectBound)
+    })
+    this.disableEditButt()
   }
 
   cancel () {
@@ -62,9 +65,10 @@ export default class StateStore {
   }
 
   delete () {
-    this.api.delete(`/${this.edited.data.id}`)
+    const id = this.edited.data.id
+    this.api.delete(`/polygons/${this.layerid}/${id}`)
       .then(res => {
-        this.layer.remove(this.edited)
+        this.layer.removeLayer(this.edited)
         this.cancelEdit()
       })
   }
@@ -91,7 +95,7 @@ export default class StateStore {
       const poly = new L.Polygon(WKT2leaflet(i.geom))
       poly.data = i
       poly.setStyle({ fillColor: 'blue', color: 'blue' })
-      poly.on('click', this.onSelect.bind(this))
+      poly.on('click', this.onSelectBound)
       this.layer.addLayer(poly)
       poly
         .bindTooltip(poly.data.title, { permanent: true, direction: 'center' })
@@ -116,19 +120,4 @@ export default class StateStore {
   __ (str) {
     return str
   }
-
-  // @observable menuDown = false
-  //
-  // @observable activeModal = null
-  // @action closeModal () {
-  //   this.activeModal = null
-  //   delete this.modalStore
-  // }
-  // @action showModal (name, params) {
-  //   this.activeModal = name
-  //   this.modalStore = new modalMapping[name](this, params)
-  // }
-  //
-  // @observable data = []
-  // @observable loading = true
 }
