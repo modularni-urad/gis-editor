@@ -1,25 +1,26 @@
-/* global L, location */
+/* global L */
 import { KROVAK } from './consts'
 import EditablesStore from './stores/editables'
 import EditControls from './editcontrols'
 import EditForm from './editform'
 import APIService from './stores/apiService'
+import query from './query'
 
 const api = new APIService()
-const pars = location.search.split('layer=')
-const layerId = pars.length > 0 ? pars[1] : 'unknown'
-api.get(`/layers/${layerId}`)
+api.get(`/layers/${query.val.layer}`)
   .then(info => {
     initDrawingStuff()
   })
 
 var map = L.map('map', {
-  center: [49.414016, 14.658385],
+  center: [query.val.lat || 49.414016, query.val.lng || 14.658385],
   editable: true,
-  zoom: 16,
+  zoom: query.val.z || 16,
   maxZoom: 22,
   // crs: KROVAK
 })
+map.on('zoomend', query.onZoomEnd)
+map.on('moveend', query.onMoveEnd)
 
 // L.tileLayer('http://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
 //   maxZoom: 20,
@@ -73,8 +74,8 @@ function initDrawingStuff () {
   const editForm = new EditForm(map)
   const drawnitems = L.featureGroup().addTo(map)
 
-  const editablesStore = new EditablesStore(api, drawnitems, layerId, drawControl, editForm)
-  editablesStore.load(layerId)
+  const editablesStore = new EditablesStore(api, drawnitems, query.val.layer, drawControl, editForm)
+  editablesStore.load(query.val.layer)
 
   const editControls = new EditControls({
     onSave: editablesStore.save.bind(editablesStore),
