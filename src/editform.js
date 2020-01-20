@@ -5,9 +5,11 @@ export default class EF {
     this.map = map
     this.form = null
   }
+
   hide () {
     this.form.remove()
   }
+
   show (data) {
     this.form = new _EditForm({ data })
     this.form.addTo(this.map)
@@ -21,7 +23,9 @@ const _EditForm = L.Control.extend({
     placeholder: 'sem více info (nepovinné)',
     data: {
       title: '',
-      link: ''
+      link: '',
+      descr: '',
+      image: ''
     }
   },
   initialize: function (options) {
@@ -31,7 +35,9 @@ const _EditForm = L.Control.extend({
   getData: function () {
     return {
       title: this.input.value,
-      link: this.linki.value
+      link: this.linki.value,
+      descr: this.descri.value,
+      image: this.imagei.value
     }
   },
   onAdd: function (map) {
@@ -48,6 +54,14 @@ const _EditForm = L.Control.extend({
     // this.input.placeholder = this.options.placeholder
     this.input.value = this.options.data.title || ''
 
+    // descr
+    group = L.DomUtil.create('div', 'form-group', this.form)
+    label = L.DomUtil.create('label', '', group)
+    label.innerHTML = 'popis'
+    this.descri = L.DomUtil.create('textarea', 'form-control form-control-sm', group)
+    // this.input.placeholder = this.options.placeholder
+    this.descri.value = this.options.data.descr || ''
+
     // url
     group = L.DomUtil.create('div', 'form-group', this.form)
     label = L.DomUtil.create('label', '', group)
@@ -57,32 +71,18 @@ const _EditForm = L.Control.extend({
     // this.linki.placeholder = 'nepovinné'
     this.linki.value = this.options.data.link || ''
 
+    // image
+    group = L.DomUtil.create('div', 'form-group', this.form)
+    label = L.DomUtil.create('label', '', group)
+    label.innerHTML = 'obrázek'
+    this.imagei = L.DomUtil.create('input', 'form-control form-control-sm', group)
+    this.imagei.type = 'text'
+    this.imagei.value = this.options.data.image || ''
+
     L.DomEvent.disableClickPropagation(container)
     return container
   },
   onRemove: function (map) {
     // when removed
-  },
-  keyup: function(e) {
-    if (e.keyCode === 38 || e.keyCode === 40) {
-      // do nothing
-    } else {
-      this.results.innerHTML = ''
-      if (this.input.value.length > 2) {
-        var value = this.input.value
-        var results = _.take(_.filter(this.options.data, function(x) {
-          return x.feature.properties.park.toUpperCase().indexOf(value.toUpperCase()) > -1
-        }).sort(sortParks), 10)
-        _.map(results, function(x) {
-          var a = L.DomUtil.create('a', 'list-group-item')
-          a.href = ''
-          a.setAttribute('data-result-name', x.feature.properties.park)
-          a.innerHTML = x.feature.properties.park
-          this.results.appendChild(a)
-          L.DomEvent.addListener(a, 'click', this.itemSelected, this)
-          return a
-        }, this)
-      }
-    }
   }
 })

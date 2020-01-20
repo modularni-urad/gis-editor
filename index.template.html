@@ -9,6 +9,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.9.0/css/all.min.css"
     integrity="sha256-UzFD2WYH2U1dQpKDjjZK72VtPeWP50NoJjd26rnAdUI=" crossorigin="anonymous" />
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.slim.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.4.1/js/bootstrap.min.js"></script>
   <script src='https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.9.1/underscore-min.js'></script>
   <link rel="stylesheet" href="http://leaflet.github.io/Leaflet.draw/docs/examples/libs/leaflet.css" />
   <script src="http://leaflet.github.io/Leaflet.draw/docs/examples/libs/leaflet-src.js"></script>
@@ -37,10 +39,42 @@
 </head>
 
 <body>
+  <div class="modal fade" id="loginModal" tabindex="-1" role="dialog"
+      aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalCenterTitle">Přihlášení uživatele</h5>
+        </div>
+        <div class="modal-body">
+          <form>
+            <div class="input-group mb-3">
+              <div class="input-group-append">
+                <span class="input-group-text"><i class="fas fa-user"></i></span>
+              </div>
+              <input type="text" id="l_uname" class="form-control input_user" value="" placeholder="username">
+            </div>
+            <div class="input-group mb-2">
+              <div class="input-group-append">
+                <span class="input-group-text"><i class="fas fa-key"></i></span>
+              </div>
+              <input type="password" id="l_passwd" class="form-control input_pass" value="" placeholder="password">
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" id="loginbutt">Login</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id='map'></div>
   <script>
+    $('#loginModal').modal({show: false})
     var Conf = {
       url: '<%= htmlWebpackPlugin.options.url %>',
+      loginUrl: '',
       version: '<%= htmlWebpackPlugin.options.version %>'
     };
   </script>

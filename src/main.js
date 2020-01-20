@@ -1,4 +1,4 @@
-/* global L */
+/* global L, alert, $ */
 import { KROVAK } from './consts'
 import EditablesStore from './stores/editables'
 import EditControls from './editcontrols'
@@ -6,10 +6,39 @@ import EditForm from './editform'
 import APIService from './stores/apiService'
 import query from './query'
 
+function doLogin () {
+  $('#loginModal').modal('show')
+  $('#loginbutt').click(function () {
+    var data = {
+      uname: $('#l_uname').val(),
+      passwd: $('#l_passwd').val()
+    }
+    api.login(data)
+      .then(res => {
+        initDrawingStuff()
+        $('#loginModal').modal('hide')
+        initDrawingStuff()
+      })
+      .catch(err => {
+        alert(err)
+      })
+  })
+}
+
 const api = new APIService()
 api.get(`/layers/${query.val.layer}`)
   .then(info => {
-    initDrawingStuff()
+    if (!api.isLoggedIn()) {
+      doLogin()
+    } else {
+      initDrawingStuff()
+    }
+  })
+  .catch(err => {
+    if (err.response.status === 404) {
+      return alert('Tato vrstva neexistuje. Máte špatný odkaz.')
+    }
+    alert(err)
   })
 
 var map = L.map('map', {
@@ -64,7 +93,7 @@ function initDrawingStuff () {
       },
       rectangle: false,
       circle: false,
-      marker: false,
+      marker: true,
       polyline: false,
       circlemarker: false
     }

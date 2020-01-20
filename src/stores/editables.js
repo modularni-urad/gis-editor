@@ -26,7 +26,7 @@ export default class StateStore {
   }
 
   load (id) {
-    this.api.get(`/polygons?layerid=${id}`).then(this.onLoaded.bind(this))
+    this.api.get(`/objs?layerid=${id}`).then(this.onLoaded.bind(this))
   }
 
   onSelect (e) {
@@ -35,10 +35,11 @@ export default class StateStore {
       layer.off('click', this.onSelectBound)
     })
     e.target.off('click')
-    e.target.setStyle({ fillColor: 'red', color: 'red' })
+    e.target.setStyle && e.target.setStyle({ fillColor: 'red', color: 'red' })
     e.target.editing.enable()
     this.edited = e.target
-    this.origGeom = JSON.stringify(this.edited.getLatLngs())
+    const orig = this.edited.getLatLngs ? this.edited.getLatLngs() : this.edited.getLatLng()
+    this.origGeom = JSON.stringify(orig)
     this.editForm.show(this.edited.data)
     this.enableEditButt()
   }
@@ -46,7 +47,7 @@ export default class StateStore {
   cancelEdit () {
     this.edited.editing.disable()
     this.edited.editing.initialize(this.edited)
-    this.edited.setStyle({ fillColor: 'blue', color: 'blue' })
+    this.edited.setStyle && this.edited.setStyle({ fillColor: 'blue', color: 'blue' })
     this.edited = null
     this.editForm.hide()
     this.layer.eachLayer(layer => {
@@ -56,7 +57,7 @@ export default class StateStore {
   }
 
   cancel () {
-    this.edited.setLatLngs(JSON.parse(this.origGeom))
+    this.edited.setLatLngs && this.edited.setLatLngs(JSON.parse(this.origGeom))
     delete this.origGeom
     if (!this.edited.data.id) {
       this.layer.removeLayer(this.edited)
@@ -66,7 +67,7 @@ export default class StateStore {
 
   delete () {
     const id = this.edited.data.id
-    this.api.delete(`/polygons/${this.layerid}/${id}`)
+    this.api.delete(`/objs/${this.layerid}/${id}`)
       .then(res => {
         this.layer.removeLayer(this.edited)
         this.cancelEdit()
@@ -74,32 +75,42 @@ export default class StateStore {
   }
 
   save () {
-    const data = this.editForm.form.getData()
-    data.geom = this.edited.toGeoJSON().geometry
+    this.savingdata = this.editForm.form.getData()
+    this.savingdata.geometry = this.edited.toGeoJSON().geometry
     const id = this.edited.data.id
     let savePromise = null
     if (id) {
-      savePromise = this.api.put(`/polygons/${this.layerid}/${id}`, data)
+      savePromise = this.api.put(`/objs/${this.layerid}/${id}`, this.savingdata)
     } else {
-      savePromise = this.api.post(`/polygons/${this.layerid}`, data)
+      savePromise = this.api.post(`/objs/${this.layerid}`, this.savingdata)
     }
     savePromise.then(this.onSaved.bind(this))
   }
 
   onSaved (data) {
+    Object.assign(this.edited.data, this.savingdata)
+    delete this.savingdata
     this.cancelEdit()
   }
 
   onLoaded (data) {
     data.map(i => {
-      const poly = new L.Polygon(WKT2leaflet(i.geom))
-      poly.data = i
-      poly.setStyle({ fillColor: 'blue', color: 'blue' })
-      poly.on('click', this.onSelectBound)
-      this.layer.addLayer(poly)
-      poly
-        .bindTooltip(poly.data.title, { permanent: true, direction: 'center' })
-        .openTooltip()
+      if (i.polygon) {
+        const poly = new L.Polygon(WKT2leaflet(i.polygon))
+        poly.data = i
+        poly.setStyle({ fillColor: 'blue', color: 'blue' })
+        poly.on('click', this.onSelectBound)
+        this.layer.addLayer(poly)
+        poly
+          .bindTooltip(poly.data.title, { permanent: true, direction: 'center' })
+          .openTooltip()
+      } else if (i.point) {
+        const poly = new L.Marker(WKT2leaflet(i.point))
+        poly.data = i
+        // poly.setStyle({ fillColor: 'blue', color: 'blue' })
+        poly.on('click', this.onSelectBound)
+        this.layer.addLayer(poly)
+      }
     })
   }
 

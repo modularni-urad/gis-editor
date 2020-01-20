@@ -36,5 +36,7 @@ export default function (wktString) {
   switch (wkt.type) {
     case 'Polygon':
       return [omitLastANdReverseCoords(wkt.coordinates[0])]
+    case 'Point':
+      return [wkt.coordinates[1], wkt.coordinates[0]]
   }
 }

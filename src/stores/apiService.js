@@ -15,8 +15,12 @@ export default class APIService {
     }
   }
 
+  isLoggedIn () {
+    return this.auth !== {}
+  }
+
   setToken (token) {
-    this.authHeader = { 'Authorization': `Bearer ${token}` }
+    this.authHeader = { Authorization: `Bearer ${token}` }
   }
 
   makeRequest (reqinfo) { // wrapper to be able to catch 401
