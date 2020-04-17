@@ -8,19 +8,14 @@ export default class APIService {
   constructor (on401) {
     this.on401 = on401
     try {
-      this.auth = JSON.parse(localStorage.getItem(STORAGE_KEY))
-      this.setToken(this.auth.token)
+      this.user = JSON.parse(localStorage.getItem(STORAGE_KEY))
     } catch (e) {
-      this.auth = {}
+      this.user = {}
     }
   }
 
   isLoggedIn () {
-    return this.auth !== {}
-  }
-
-  setToken (token) {
-    this.authHeader = { Authorization: `Bearer ${token}` }
+    return this.user !== {}
   }
 
   makeRequest (reqinfo) { // wrapper to be able to catch 401
@@ -28,13 +23,13 @@ export default class APIService {
       const onSuccess = (res) => {
         resolve(res.data)
       }
+      reqinfo.withCredentials = true
       axios(reqinfo)
         .then(onSuccess)
         .catch(err => {
           if (err.response && err.response.status === 401) {
             return this.on401(err)
               .then(() => {
-                reqinfo.headers = this.authHeader // update with new token
                 return axios(reqinfo) // retry
               })
               .then(onSuccess)
@@ -55,17 +50,6 @@ export default class APIService {
       url: `${Conf.url}${url}`,
       headers: this.authHeader
     })
-    // return new Promise(resolve => {
-    //   const polygon = {
-    //     geom: [
-    //       [49.414016, 14.658385],
-    //       [49.41, 14.658385],
-    //       [49.414016, 14.65]
-    //     ],
-    //     title: 'My polygon 1'
-    //   }
-    //   setTimeout(() => resolve(polygon), 1000)
-    // })
   }
 
   post (url, data) {
@@ -95,19 +79,28 @@ export default class APIService {
   }
 
   login (credents) {
-    return axios({ method: 'post', url: Conf.loginUrl, data: credents })
+    return axios({
+      method: 'post',
+      url: Conf.loginUrl,
+      data: credents
+    })
       .then(res => {
-        this.auth = {
-          user: credents,
-          token: res.data.token
-        }
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(this.auth))
-        this.setToken(res.data.token)
+        return axios.post(`${Conf.url}/login`, null, {
+          headers: {
+            Authorization: `JWT ${res.data}`
+          }
+        })
+      })
+      .then(res => {
+        this.user = credents
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(this.user))
       })
   }
 
   logout () {
-    localStorage.removeItem(STORAGE_KEY)
-    this.auth = {}
+    axios.post(`${Conf.url}/logout`).then(res => {
+      localStorage.removeItem(STORAGE_KEY)
+      this.user = {}
+    })
   }
 }

@@ -1,9 +1,10 @@
-/* global L */
+/* global L, _ */
 
 export default class EF {
-  constructor (map) {
+  constructor (map, settings) {
     this.map = map
     this.form = null
+    this.settings = settings
   }
 
   hide () {
@@ -11,7 +12,7 @@ export default class EF {
   }
 
   show (data) {
-    this.form = new _EditForm({ data })
+    this.form = new _EditForm({ data, settings: this.settings })
     this.form.addTo(this.map)
   }
 }
@@ -21,63 +22,61 @@ const _EditForm = L.Control.extend({
     // topright, topleft, bottomleft, bottomright
     position: 'topright',
     placeholder: 'sem více info (nepovinné)',
-    data: {
-      title: '',
-      link: '',
-      descr: '',
-      image: ''
-    }
+    data: {}
   },
   initialize: function (options) {
     // constructor
     L.Util.setOptions(this, options)
   },
   getData: function () {
-    return {
-      title: this.input.value,
-      link: this.linki.value,
-      descr: this.descri.value,
-      image: this.imagei.value
+    function _constructInfo () {
+      return _.reduce(this.options.settings, (acc, i) => {
+        acc[i] = this.inputs[i].value
+        return acc
+      }, {})
     }
+    return this.options.settings
+      ? _constructInfo()
+      : JSON.parse(this.jsoninfo.value)
   },
   onAdd: function (map) {
     // happens after added to map
     var container = L.DomUtil.create('div', 'search-container')
     this.form = L.DomUtil.create('form', 'form frm', container)
 
-    // title
-    var group = L.DomUtil.create('div', 'form-group', this.form)
-    var label = L.DomUtil.create('label', '', group)
-    label.innerHTML = 'název/poznámka'
-    this.input = L.DomUtil.create('input', 'form-control form-control-sm', group)
-    this.input.type = 'text'
-    // this.input.placeholder = this.options.placeholder
-    this.input.value = this.options.data.title || ''
+    var group, label
 
-    // descr
-    group = L.DomUtil.create('div', 'form-group', this.form)
-    label = L.DomUtil.create('label', '', group)
-    label.innerHTML = 'popis'
-    this.descri = L.DomUtil.create('textarea', 'form-control form-control-sm', group)
-    // this.input.placeholder = this.options.placeholder
-    this.descri.value = this.options.data.descr || ''
-
-    // url
-    group = L.DomUtil.create('div', 'form-group', this.form)
-    label = L.DomUtil.create('label', '', group)
-    label.innerHTML = 'odkaz na detail'
-    this.linki = L.DomUtil.create('input', 'form-control form-control-sm', group)
-    this.linki.type = 'text'
-    // this.linki.placeholder = 'nepovinné'
-    this.linki.value = this.options.data.link || ''
-
-    // image
-    group = L.DomUtil.create('div', 'form-group', this.form)
-    label = L.DomUtil.create('label', '', group)
-    label.innerHTML = 'obrázek'
-    this.imagei = L.DomUtil.create('input', 'form-control form-control-sm', group)
-    this.imagei.type = 'text'
-    this.imagei.value = this.options.data.image || ''
+    if (!this.options.settings) {
+      group = L.DomUtil.create('div', 'form-group', this.form)
+      label = L.DomUtil.create('label', '', group)
+      label.innerHTML = 'JSON info'
+      this.jsoninfo = L.DomUtil.create('textarea', 'form-control form-control-sm', group)
+      this.jsoninfo.placeholder = 'json info'
+      this.jsoninfo.value = this.options.data
+        ? JSON.stringify(this.options.data, null, 2)
+        : ''
+      return container
+    }
+    this.inputs = {}
+    _.map(this.options.settings, (i) => {
+      group = L.DomUtil.create('div', 'form-group', this.form)
+      if (i.l) {
+        label = L.DomUtil.create('label', '', group)
+        label.innerHTML = i.l
+      }
+      switch (i.t) {
+        case 'text':
+        case 'number':
+          this.inputs[i.a] = L.DomUtil.create('input', 'form-control form-control-sm', group)
+          this.inputs[i.a].type = i.t
+          break
+        case 'textarea':
+          this.inputs[i.a] = L.DomUtil.create('textarea', 'form-control form-control-sm', group)
+          break
+      }
+      // this.input.placeholder = this.options.placeholder
+      this.inputs[i.a].value = this.options.data ? this.options.data[i.a] || '' : ''
+    })
 
     L.DomEvent.disableClickPropagation(container)
     return container

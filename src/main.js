@@ -25,13 +25,13 @@ function doLogin () {
   })
 }
 
-const api = new APIService()
+const api = new APIService(doLogin)
 api.get(`/layers/${query.val.layer}`)
   .then(info => {
     if (!api.isLoggedIn()) {
       doLogin()
     } else {
-      initDrawingStuff()
+      initDrawingStuff(info.settings)
     }
   })
   .catch(err => {
@@ -51,9 +51,8 @@ var map = L.map('map', {
 map.on('zoomend', query.onZoomEnd)
 map.on('moveend', query.onMoveEnd)
 
-// L.tileLayer('http://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
-//   maxZoom: 20,
-//   attribution: '&copy; <a href="http://openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+// L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+//   attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 // }).addTo(map)
 
 // L.tileLayer.wms('http://geoportal.cuzk.cz/WMS_ORTOFOTO_PUB/WMService.aspx', {
@@ -65,6 +64,7 @@ map.on('moveend', query.onMoveEnd)
 //   attribution: 'ČÚZK',
 //   crs: KROVAK
 // }).addTo(map)
+
 L.tileLayer('http://geoportal.cuzk.cz/WMTS_ORTOFOTO_900913/WMTService.aspx?service=WMTS&request=GetTile&version=1.0.0&layer=orto&style=default&format=image/png&TileMatrixSet=googlemapscompatibleext2:epsg:3857&TileMatrix={z}&TileRow={y}&TileCol={x}', {
   maxZoom: 22,
   maxNativeZoom: 18,
@@ -81,7 +81,7 @@ L.tileLayer('http://geoportal.cuzk.cz/WMTS_ORTOFOTO_900913/WMTService.aspx?servi
 //   crs: KROVAK
 // }).addTo(map)
 
-function initDrawingStuff () {
+function initDrawingStuff (settings) {
   // TODO: disable when editing
   // https://github.com/Leaflet/Leaflet.draw/issues/401
   // https://github.com/Leaflet/Leaflet.draw/issues/315#issuecomment-104233372
@@ -100,7 +100,7 @@ function initDrawingStuff () {
   })
   map.addControl(drawControl)
 
-  const editForm = new EditForm(map)
+  const editForm = new EditForm(map, settings)
   const drawnitems = L.featureGroup().addTo(map)
 
   const editablesStore = new EditablesStore(api, drawnitems, query.val.layer, drawControl, editForm)

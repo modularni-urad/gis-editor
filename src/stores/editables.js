@@ -3,14 +3,22 @@ import WKT2leaflet from './wkt2leaflet'
 
 export default class StateStore {
   //
-  constructor (api, layer, layerid, drawControl, editForm) {
+  constructor (api, layer, layerid, drawControl, editForm, doLogin) {
     this.layer = layer
     this.layerid = layerid
     this.api = api
     this.edited = null
+    this.doLogin = doLogin
     this.drawControl = drawControl
     this.editForm = editForm
     this.onSelectBound = this.onSelect.bind(this)
+    this.onErrorBound = this.onError.bind(this)
+  }
+
+  onError (e) {
+    if (e.status === 401) {
+      return this.doLogin()
+    }
   }
 
   on401 (e) {
@@ -40,7 +48,7 @@ export default class StateStore {
     this.edited = e.target
     const orig = this.edited.getLatLngs ? this.edited.getLatLngs() : this.edited.getLatLng()
     this.origGeom = JSON.stringify(orig)
-    this.editForm.show(this.edited.data)
+    this.editForm.show(this.edited.data.properties)
     this.enableEditButt()
   }
 
@@ -72,19 +80,26 @@ export default class StateStore {
         this.layer.removeLayer(this.edited)
         this.cancelEdit()
       })
+      .catch(this.onErrorBound)
   }
 
   save () {
     this.savingdata = this.editForm.form.getData()
-    this.savingdata.geometry = this.edited.toGeoJSON().geometry
     const id = this.edited.data.id
     let savePromise = null
     if (id) {
-      savePromise = this.api.put(`/objs/${this.layerid}/${id}`, this.savingdata)
+      savePromise = this.api.put(`/objs/${this.layerid}/${id}`, {
+        geometry: this.edited.toGeoJSON().geometry,
+        properties: this.savingdata
+      })
     } else {
-      savePromise = this.api.post(`/objs/${this.layerid}`, this.savingdata)
+      savePromise = this.api.post(`/objs/${this.layerid}`, {
+        type: 'Feature',
+        geometry: this.edited.toGeoJSON().geometry,
+        properties: this.savingdata
+      })
     }
-    savePromise.then(this.onSaved.bind(this))
+    savePromise.then(this.onSaved.bind(this)).catch(this.onErrorBound)
   }
 
   onSaved (data) {
