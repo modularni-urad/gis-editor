@@ -18,7 +18,7 @@ module.exports = (env = {
 }) => {
   const { ifProd } = getIfUtils(env)
   const babelOptions = {
-    presets: ['react', 'stage-1', ['es2015', { 'modules': false }]],
+    presets: ['stage-1', ['es2015', { 'modules': false }]],
     plugins: [
       'transform-object-rest-spread',
       'transform-decorators-legacy',
@@ -33,7 +33,6 @@ module.exports = (env = {
       loaders: [
         {
           test: /\.js$/,
-          exclude: /node_modules(?!(\\|\/)react-mobx-admin|(\\|\/)bstrap-react-mobx-admin|(\\|\/)mobx-router)/,
           loader: 'babel-loader',
           options: babelOptions
         }
