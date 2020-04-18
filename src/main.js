@@ -26,7 +26,7 @@ function doLogin () {
 }
 
 const api = new APIService(doLogin)
-api.get(`/layers/${query.val.layer}`)
+api.get(`/layers/${query.val.layerid}`)
   .then(info => {
     if (!api.isLoggedIn()) {
       doLogin()
