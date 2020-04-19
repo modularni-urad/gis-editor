@@ -103,8 +103,8 @@ function initDrawingStuff (settings) {
   const editForm = new EditForm(map, settings)
   const drawnitems = L.featureGroup().addTo(map)
 
-  const editablesStore = new EditablesStore(api, drawnitems, query.val.layer, drawControl, editForm)
-  editablesStore.load(query.val.layer)
+  const editablesStore = new EditablesStore(api, drawnitems, query.val.layerid, drawControl, editForm)
+  editablesStore.load(query.val.layerid)
 
   const editControls = new EditControls({
     onSave: editablesStore.save.bind(editablesStore),

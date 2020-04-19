@@ -29,14 +29,11 @@ const _EditForm = L.Control.extend({
     L.Util.setOptions(this, options)
   },
   getData: function () {
-    function _constructInfo () {
-      return _.reduce(this.options.settings, (acc, i) => {
-        acc[i] = this.inputs[i].value
+    return this.options.settings
+      ? _.reduce(this.options.settings, (acc, i) => {
+        acc[i.a] = this.inputs[i.a].value
         return acc
       }, {})
-    }
-    return this.options.settings
-      ? _constructInfo()
       : JSON.parse(this.jsoninfo.value)
   },
   onAdd: function (map) {
